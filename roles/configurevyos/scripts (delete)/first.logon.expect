@@ -1,0 +1,55 @@
+#!/usr/bin/expect -f
+
+set ipaddress [lindex $argv 0]
+set password [lindex $argv 1]
+set installusername vyos
+set installpassword vyos
+
+set timeout 30
+
+spawn ssh -o StrictHostKeyChecking=no $installusername@$ipaddress
+
+expect {
+    "password:" {
+        send -- "$installpassword\r"
+        expect {
+            "Welcome to VyOS!" {
+                expect "$installusername@*"
+                send -- "config\r"
+
+                expect "$installusername@*"
+                send -- "set system login user vyos authentication plaintext-password $password\r"
+
+                expect "$installusername@*"
+                send -- "commit\r"
+
+                expect "$installusername@*"
+                send -- "save\r"
+
+                #expect "$installusername@*"
+                #send -- "exit\r"
+
+                expect eof
+
+                send_user "**** Changed: Finished Expect: No expire - New password for default user forced\n"
+            }
+            "Permission denied" {
+                send -- "$password\r"
+                expect {
+                    "Welcome to VyOS!" {
+                        expect "$installusername@*"
+                        send -- "exit\r"
+
+                        expect eof
+
+                        send_user "**** Finished Expect: New password has previously been set\n"
+                    }
+                    "Permission denied" {
+                        send -- "\x03"
+                        send_user "**** Error: Finished Expect: New password has previously been blocked (I think)\n"
+                    }
+                }
+            }
+        }
+    }
+}

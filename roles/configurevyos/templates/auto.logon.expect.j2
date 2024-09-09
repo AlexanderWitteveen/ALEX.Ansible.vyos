@@ -1,0 +1,47 @@
+#!/usr/bin/expect -f
+
+set username {{ prop_admin_username }}
+set password {{ prop_admin_password }}
+set key {{ arg_pub_key.key }}
+set type {{ arg_pub_key.type }}
+
+set timeout 20
+
+spawn qm terminal {{ prop_proxmox_vmid }}
+
+expect "(press Ctrl+O to exit)"
+send -- "\r"
+
+expect "vyos login"
+send -- "$username\r"
+
+expect "Password:" 
+send -- "$password\r"
+
+expect "Welcome to VyOS!" 
+expect "$username@*"
+send -- "config\r"
+
+expect "$username@*"
+send -- "set system login user $username authentication public-keys $username-key key \"$key\" \r"
+
+expect "$username@*"
+send -- "set system login user $username authentication public-keys $username-key type $type \r"
+
+expect "$username@*"
+send -- "commit\r"
+
+expect "$username@*"
+send -- "save\r"
+
+expect "$username@*"
+send -- "exit\r"
+
+expect "$username@*"
+send -- "exit\r"
+
+expect "logout"
+send -- "\x0f"
+expect eof
+
+send_user "**** Changed Finished Expect: SSH public key set for new user\n"

@@ -1,0 +1,37 @@
+---
+
+- name: Configure DNS Entry
+  shell: |
+    source /opt/vyatta/etc/functions/script-template
+    configure
+    set service dns forwarding authoritative-domain {{ prop_domain }} records a {{ prop_hostname }} address {{ prop_ipaddress }}
+    commit
+    save
+    exit
+  async: 30
+  poll: 5
+  args:
+    executable: /bin/vbash
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_dns_server }}"
+
+- name: Configure DNS Entry
+  shell: |
+    source /opt/vyatta/etc/functions/script-template
+    configure
+    set service dns forwarding authoritative-domain {{ dns.domain }} records {{ dns.type }} {{ dns.name }} address {{ prop_ipaddress }}
+    commit
+    save
+    exit
+  async: 30
+  poll: 5
+  loop: "{{ prop_dns }}"
+  loop_control:
+    loop_var: dns
+  when: prop_dns is defined
+  args:
+    executable: /bin/vbash
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_dns_server }}"

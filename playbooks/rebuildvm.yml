@@ -1,0 +1,16 @@
+---
+
+- name: "Playbook: Rebuild VM"
+  hosts: "{{ args_host }}"
+  gather_facts: false
+
+  vars_files:
+    - /etc/ansible/inventory/vars.yml
+
+  tasks:
+    - ansible.builtin.include_role: # import vm
+        name: alex.proxmox.importvm
+    - ansible.builtin.include_role: # start vm
+        name: alex.proxmox.startvm
+    - ansible.builtin.include_role: # configure vyos
+        name: alex.vyos.configurevyos

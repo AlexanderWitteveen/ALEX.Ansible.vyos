@@ -1,0 +1,45 @@
+---
+
+# - name: Print return information from the previous task
+#   ansible.builtin.debug:
+#     var: hostvars["a5099"].prop_hostname
+#     verbosity: 2
+
+
+# - name: Print return information from the previous task
+#   ansible.builtin.debug:
+#     var: hostvars.values().index(0)
+#     verbosity: 2
+
+- name: Execute script
+  shell: |
+    echo "------"      
+    {% for item in hostvars.values() %}
+        {% if item["prop_hostname"] is defined and item["prop_environment"] is defined%}
+            {% if item["prop_environment"] == "dev-net" %}
+                echo {{ item["prop_hostname"] }}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    echo "------"      
+  args:
+    executable: /bin/bash
+  connection: local
+  become: false
+
+# - name: Execute script
+#   shell: |
+#     echo "------"      
+#     {% for key, value in hostvars.items() %}
+#         # echo {{ key }}
+#         {% if value["prop_hostname"] is defined %}
+#             {% if value["prop_hostname"] is defined %}
+#                 echo {{ value["prop_hostname"] }}
+#             {% endif %}
+#         {% endif %}
+#     {% endfor %}
+#     echo "------"      
+#   args:
+#     executable: /bin/bash
+#   connection: local
+#   become: false

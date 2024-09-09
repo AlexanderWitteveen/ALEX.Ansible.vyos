@@ -1,0 +1,7 @@
+---
+
+- ansible.builtin.include_role: # reboot vm
+    name: alex.proxmox.rebootvm
+
+- ansible.builtin.include_role: # configurevyos
+    name: alex.vyos.configurevyos

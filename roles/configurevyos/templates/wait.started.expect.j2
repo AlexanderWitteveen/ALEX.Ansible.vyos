@@ -1,0 +1,49 @@
+#!/usr/bin/expect -f
+
+set timeout 50
+
+spawn qm terminal {{ prop_proxmox_vmid }}
+
+expect "starting serial terminal"
+
+send -- "\r"
+
+expect {
+    "vyos login" {
+        send -- "\x0f"
+        expect eof
+
+        send_user "**** Changed: Finished Expect: system started\n"
+    }
+    "vyos@vyos:" {
+        send -- "exit\r"
+
+        expect "logout"
+        send -- "\x0f"
+        expect eof
+
+        send_user "**** Changed: Finished Expect: system started\n"
+    }
+    "vyos@vyos#" {
+        send -- "exit discard\r"
+
+        expect "vyos@vyos:"
+        send -- "exit\r"
+
+        expect "logout"
+        send -- "\x0f"
+        expect eof
+
+        send_user "**** Changed: Finished Expect: system started\n"
+    }
+    "Password" {
+        send -- "\r"
+        expect "vyos login"
+        
+        send -- "\x0f"
+        expect eof
+
+        send_user "**** Changed: Finished Expect: system started\n"
+    }
+}
+

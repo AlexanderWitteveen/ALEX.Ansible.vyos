@@ -1,0 +1,23 @@
+---
+
+- name: Configure DHCP Entry
+  shell: |
+    source /opt/vyatta/etc/functions/script-template
+    configure
+    set service dhcp-server shared-network-name {{ interface.vlan }} subnet {{ interface.subnet }} static-mapping {{ prop_hostname }} description "{{ prop_description }}"
+    set service dhcp-server shared-network-name {{ interface.vlan }} subnet {{ interface.subnet }} static-mapping {{ prop_hostname }} ip-address {{ interface.address }}
+    set service dhcp-server shared-network-name {{ interface.vlan }} subnet {{ interface.subnet }} static-mapping {{ prop_hostname }} mac {{ interface.mac }}
+    commit
+    save
+    exit
+  async: 30
+  poll: 5
+  loop: "{{ prop_vm_network }}"
+  loop_control:
+    loop_var: interface
+  when: interface.address is defined
+  args:
+    executable: /bin/vbash
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_dhcp_server }}"
