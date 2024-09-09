@@ -1,0 +1,65 @@
+#!/usr/bin/expect -f
+
+set password {{ prop_admin_password }}
+set installusername vyos
+set installpassword vyos
+
+set timeout 20
+
+spawn qm terminal {{ prop_proxmox_vmid }}
+
+expect "(press Ctrl+O to exit)"
+send -- "\r"
+
+expect "vyos login:*"
+send -- "$installusername\r"
+
+expect "Password:" 
+send -- "$installpassword\r"
+
+expect {
+    "Welcome to VyOS!" {
+        expect "$installusername@*"
+        send -- "rm /config/config.boot\r"
+
+        expect "$installusername@*"
+        send -- "exit\r"
+
+        expect "logout"
+        send -- "\x0f"
+        expect eof
+
+        send_user "**** Changed: Finished Expect: config deleted\n"
+    }
+    "Login incorrect" {
+        expect "vyos login"
+        send -- "$installusername\r"
+
+        expect "Password:"
+        send -- "$password\r"
+
+        expect {
+            "Welcome to VyOS!" {
+                send -- "rm /config/config.boot\r"
+
+                expect "$installusername@*"
+                send -- "exit\r"
+
+                expect "logout"
+                send -- "\x0f"
+                expect eof
+
+                send_user "**** Finished Expect: Finished Expect: config deleted\n"
+            }
+            "Permission denied" {
+                expect "vyos login"
+
+                send -- "\x0f"
+                expect eof
+
+                send_user "**** Finished Expect: admin ip address previously set\n"
+            }
+        }
+    }
+}  
+

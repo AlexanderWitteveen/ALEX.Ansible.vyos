@@ -1,0 +1,67 @@
+#!/usr/bin/expect -f
+
+set username {{ prop_admin_username }}
+set password {{ prop_admin_password }}
+set installusername vyos
+
+set timeout 30
+
+spawn qm terminal {{ prop_proxmox_vmid }}
+
+expect "(press Ctrl+O to exit)"
+send -- "\r"
+
+expect "vyos login"
+send -- "$installusername\r"
+
+expect "Password:" 
+send -- "$password\r"
+
+expect { 
+    "Welcome to VyOS!" {
+        expect "$installusername@*"
+        send -- "config\r"
+
+        expect "$installusername@*"
+        send -- "show system login\r"
+
+        expect {
+            "$username" {
+                expect "$installusername@*"
+                send -- "exit\r"
+
+                expect "$installusername@*"
+                send -- "exit\r"
+
+                expect "logout"
+                send -- "\x0f"
+                expect eof
+
+                send_user "**** Finished Expect: User already exists\n"
+            }
+            "edit" {
+                expect "$installusername@*"
+                send -- "set system login user $username authentication plaintext-password $password\r"
+
+                expect "$installusername@*"
+                send -- "commit\r"
+
+                expect "$installusername@*"
+                send -- "save\r"
+
+                expect "$installusername@*"
+                send -- "exit\r"
+
+                expect "$installusername@*"
+                send -- "exit\r"
+
+                expect "logout"
+                send -- "\x0f"
+                expect eof
+
+                send_user "**** Changed: Finished Expect: New user added and configured\n"
+            }
+        }
+    }
+}
+

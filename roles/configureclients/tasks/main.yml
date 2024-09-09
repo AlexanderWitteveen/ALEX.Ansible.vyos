@@ -1,0 +1,54 @@
+---
+
+- name: Template expect file
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ prop_admin_username }}"
+    group: "{{ prop_admin_groupname }}"
+    mode: '0644'
+  loop:
+    - src: register.dhcp.clients.expect.j2
+      dest: "~/register.dhcp.clients.{{ prop_proxmox_vmid }}.expect"
+    - src: register.dns.clients.expect.j2
+      dest: "~/register.dns.clients.{{ prop_proxmox_vmid }}.expect"
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_proxmox_host }}"
+  become: true
+
+- name: Execute expect script - register dhcp clients
+  shell: |
+    expect "~/register.dhcp.clients.{{ prop_proxmox_vmid }}.expect"
+    echo "CHANGED"
+  register: expectresult
+  changed_when: '"Changed" in expectresult.stdout'
+  failed_when: '("Error" in expectresult.stdout) or ("Host key verification failed." in expectresult.stdout)'
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_proxmox_host }}"
+  become: true
+
+- name: Execute expect script - register dns clients
+  shell: |
+    expect "~/register.dns.clients.{{ prop_proxmox_vmid }}.expect"
+    echo "CHANGED"
+  register: expectresult
+  changed_when: '"Changed" in expectresult.stdout'
+  failed_when: '("Error" in expectresult.stdout) or ("Host key verification failed." in expectresult.stdout)'
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_proxmox_host }}"
+  become: true
+
+# - name: Delete expect files
+#   ansible.builtin.file:
+#     path: "{{ item }}"
+#     state: absent
+#   loop:
+#     - "~/register.dhcp.clients.{{ prop_proxmox_vmid }}.expect"
+#     - "~/register.dns.clients.{{ prop_proxmox_vmid }}.expect"
+#   vars:
+#     ansible_connection: ssh
+#     ansible_host: "{{ prop_proxmox_host }}"
+#   become: true
