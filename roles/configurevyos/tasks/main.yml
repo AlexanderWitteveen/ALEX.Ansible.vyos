@@ -220,13 +220,13 @@
     ansible_host: "{{ prop_proxmox_host }}"
   become: true
 
-- name: Filter csr
-  shell: |
-    tail ~/host.csr -n 20 | head -n 17 > host.csr
-  vars:
-    ansible_connection: ssh
-    ansible_host: "{{ prop_proxmox_host }}"
-  become: true
+# - name: Filter csr
+#   shell: |
+#     tail ~/host.csr -n 20 | head -n 17 > host.csr
+#   vars:
+#     ansible_connection: ssh
+#     ansible_host: "{{ prop_proxmox_host }}"
+#   become: true
 
 - name: Copy CSR
   ansible.builtin.fetch:
@@ -257,26 +257,6 @@
     ansible_connection: ssh
     ansible_host: "{{ prop_proxmox_host }}"
   become: true
-
-# - name: Sign certificate
-#   shell: |
-#     openssl ca -in /tmp/{{ prop_hostname }}.csr -out /tmp/{{ prop_hostname }}.cer -config "{{ prop_certificates_sources }}/openssl/openssl.cnf" -batch -create_serial -notext 
-#   args:
-#     executable: /bin/bash
-#   connection: local
-#   become: true
-
-# - name: Copy certificate
-#   copy:
-#     src: "/tmp/{{ prop_hostname }}.cer"
-#     dest: "~/host.cer"
-#     owner: root
-#     group: root
-#     mode: 0755
-#   vars:
-#     ansible_connection: ssh
-#     ansible_host: "{{ prop_proxmox_host }}"
-#   become: true
 
 - name: Execute script
   shell: |
@@ -325,55 +305,59 @@
     ansible_host: "{{ prop_proxmox_host }}"
   become: true
 
-# - name: Execute expect script - register dhcp clients
-#   shell: |
-#     expect "~/register.dhcp.clients.{{ prop_proxmox_vmid }}.expect"
-#     echo "CHANGED"
-#   register: expectresult
-#   changed_when: '"Changed" in expectresult.stdout'
-#   failed_when: '("Error" in expectresult.stdout) or ("Host key verification failed." in expectresult.stdout)'
-#   vars:
-#     ansible_connection: ssh
-#     ansible_host: "{{ prop_proxmox_host }}"
-#   become: true
+- name: Execute expect script - register dhcp clients
+  shell: |
+    expect "~/register.dhcp.clients.{{ prop_proxmox_vmid }}.expect"
+    echo "CHANGED"
+  register: expectresult
+  changed_when: '"Changed" in expectresult.stdout'
+  failed_when: '("Error" in expectresult.stdout) or ("Host key verification failed." in expectresult.stdout)'
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_proxmox_host }}"
+  become: true
 
-# - name: Execute expect script - register dns clients
-#   shell: |
-#     expect "~/register.dns.clients.{{ prop_proxmox_vmid }}.expect"
-#     echo "CHANGED"
-#   register: expectresult
-#   changed_when: '"Changed" in expectresult.stdout'
-#   failed_when: '("Error" in expectresult.stdout) or ("Host key verification failed." in expectresult.stdout)'
-#   vars:
-#     ansible_connection: ssh
-#     ansible_host: "{{ prop_proxmox_host }}"
-#   become: true
+- name: Execute expect script - register dns clients
+  shell: |
+    expect "~/register.dns.clients.{{ prop_proxmox_vmid }}.expect"
+    echo "CHANGED"
+  register: expectresult
+  changed_when: '"Changed" in expectresult.stdout'
+  failed_when: '("Error" in expectresult.stdout) or ("Host key verification failed." in expectresult.stdout)'
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_proxmox_host }}"
+  become: true
 
-# - name: Delete expect files
-#   ansible.builtin.file:
-#     path: "{{ item }}"
-#     state: absent
-#   loop:
-#     - "~/wait.started.{{ prop_proxmox_vmid }}.expect"
-#     - "~/reset.config.{{ prop_proxmox_vmid }}.expect"
-#     - "~/first.logon.{{ prop_proxmox_vmid }}.expect"
-#     - "~/add.user.{{ prop_proxmox_vmid }}.expect"
-#     - "~/auto.logon.{{ prop_proxmox_vmid }}.expect"
-#     - "~/config.api.{{ prop_proxmox_vmid }}.expect"
-#     - "~/config.network.{{ prop_proxmox_vmid }}.expect"
-#     - "~/config.network.interfaces.{{ prop_proxmox_vmid }}.expect"
-#     - "~/config.network.routes.{{ prop_proxmox_vmid }}.expect"
-#     - "~/config.network.dhcp.{{ prop_proxmox_vmid }}.expect"
-#     - "~/config.network.dns.{{ prop_proxmox_vmid }}.expect"
-#     - "~/register.dhcp.clients.{{ prop_proxmox_vmid }}.expect"
-#     - "~/register.dns.clients.{{ prop_proxmox_vmid }}.expect"
-#     - "~/generate.csr.{{ prop_proxmox_vmid }}.expect"
-#     - "~/config.host.cer1.{{ prop_proxmox_vmid }}.expect"
-#     - "~/config.host.cer2.{{ prop_proxmox_vmid }}.expect"
-#   vars:
-#     ansible_connection: ssh
-#     ansible_host: "{{ prop_proxmox_host }}"
-#   become: true
+- name: Delete expect files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "~/wait.started.{{ prop_proxmox_vmid }}.expect"
+    - "~/reset.config.{{ prop_proxmox_vmid }}.expect"
+    - "~/first.logon.{{ prop_proxmox_vmid }}.expect"
+    - "~/add.user.{{ prop_proxmox_vmid }}.expect"
+    - "~/auto.logon.{{ prop_proxmox_vmid }}.expect"
+    - "~/config.api.{{ prop_proxmox_vmid }}.expect"
+    - "~/config.network.{{ prop_proxmox_vmid }}.expect"
+    - "~/config.network.interfaces.{{ prop_proxmox_vmid }}.expect"
+    - "~/config.network.routes.{{ prop_proxmox_vmid }}.expect"
+    - "~/config.network.dhcp.{{ prop_proxmox_vmid }}.expect"
+    - "~/config.network.dns.{{ prop_proxmox_vmid }}.expect"
+    - "~/register.dhcp.clients.{{ prop_proxmox_vmid }}.expect"
+    - "~/register.dns.clients.{{ prop_proxmox_vmid }}.expect"
+    - "~/generate.csr.{{ prop_proxmox_vmid }}.expect"
+    - "~/config.host.cer1.{{ prop_proxmox_vmid }}.expect"
+    - "~/config.host.cer2.{{ prop_proxmox_vmid }}.expect"
+    - "~/config.host.cer.expect"
+    - "~/host.cer"
+    - "~/host.csr"
+    - "./host.csr"
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_proxmox_host }}"
+  become: true
 
 - ansible.builtin.include_role: # knownoshost
     name: alex.base.knownoshost
