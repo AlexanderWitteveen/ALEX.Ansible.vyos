@@ -1,6 +1,6 @@
 ---
 
-- name: "Playbook: reconfigure vyos"
+- name: "Playbook: test vyos"
   hosts: "{{ args_host }}"
   gather_facts: false
 
@@ -8,5 +8,6 @@
     - /etc/ansible/inventory/vars.yml
 
   tasks:
-    - ansible.builtin.include_role: # configurevyos
-        name: alex.vyos.resetvyos
+    - ansible.builtin.include_role:
+        name: alex.vyos.registerclient
+
