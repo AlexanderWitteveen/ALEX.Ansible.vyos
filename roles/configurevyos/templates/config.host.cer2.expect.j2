@@ -1,0 +1,28 @@
+
+expect "$username@*"
+send -- "config\r"
+
+expect "$username@*"
+send -- "run import pki certificate host file host.cer\r"
+
+expect "$username@*"
+send -- "run import pki certificate host key-file /config/auth/host.key\r"
+
+expect "Enter private key passphrase*"
+send -- "\r"
+
+expect "$username@*"
+send -- "commit\r"
+
+expect "$username@*"
+send -- "save\r"
+
+expect "$username@*"
+send -- "exit\r"
+
+expect "logout"
+send -- "\x0f"
+expect eof
+
+send_user "**** Changed Finished Expect: Network configured\n"
+

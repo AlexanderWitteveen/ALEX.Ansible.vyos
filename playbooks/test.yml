@@ -8,6 +8,6 @@
     - /etc/ansible/inventory/vars.yml
 
   tasks:
-    - ansible.builtin.include_role: # knownoshost
+    - ansible.builtin.include_role:
         name: alex.vyos.test
 

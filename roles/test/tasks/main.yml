@@ -1,45 +1,44 @@
 ---
 
-# - name: Print return information from the previous task
-#   ansible.builtin.debug:
-#     var: hostvars["a5099"].prop_hostname
-#     verbosity: 2
-
-
-# - name: Print return information from the previous task
-#   ansible.builtin.debug:
-#     var: hostvars.values().index(0)
-#     verbosity: 2
-
-- name: Execute script
+- name: Register DNS
   shell: |
-    echo "------"      
-    {% for item in hostvars.values() %}
-        {% if item["prop_hostname"] is defined and item["prop_environment"] is defined%}
-            {% if item["prop_environment"] == "dev-net" %}
-                echo {{ item["prop_hostname"] }}
-            {% endif %}
+    # curl --location --request POST 'https://10.20.10.1/retrieve' --form data='{"op": "showConfig", "path": []}' --form key='{{ prop_admin_password }}'
+    # curl --location --request POST 'https://{{ prop_router }}/retrieve' --form data='{"op": "showConfig", "path": []}' --form key='{{ prop_admin_password }}'
+    {% if prop_vm_network is defined %}
+      {% for vm_network in prop_vm_network %}
+        {% if vm_network["dns"] is defined %}
+          {% for dns in vm_network["dns"] %}
+            # path='["service", "dns", "forwarding", "authoritative-domain", "{{ dns["domain"] }}", "records", "{{ dns["type"] | default("a") }}", "{{ dns["name"] | default(prop_hostname) }}", "address", "{{ vm_network["address"] }}"]'
+            curl --location --request POST "https://{{ prop_router }}/configure" \
+              --form 'data={"op": "set", "path": ["service", "dns", "forwarding", "authoritative-domain", "{{ dns["domain"] }}", "records", "{{ dns["type"] | default("a") }}", "{{ dns["name"] | default(prop_hostname) }}", "address", "{{ vm_network["address"] }}"]}' \
+              --form key="{{ prop_admin_password }}"
+          {% endfor %}
         {% endif %}
-    {% endfor %}
-    echo "------"      
+      {% endfor %}
+    {% endif %}
   args:
     executable: /bin/bash
   connection: local
-  become: false
+  become: true
 
-# - name: Execute script
-#   shell: |
-#     echo "------"      
-#     {% for key, value in hostvars.items() %}
-#         # echo {{ key }}
-#         {% if value["prop_hostname"] is defined %}
-#             {% if value["prop_hostname"] is defined %}
-#                 echo {{ value["prop_hostname"] }}
-#             {% endif %}
-#         {% endif %}
-#     {% endfor %}
-#     echo "------"      
-#   args:
-#     executable: /bin/bash
-#   connection: local
-#   become: false
+- name: Register DHCP
+  shell: |
+    {% if prop_vm_network is defined %}
+      {% for vm_network in prop_vm_network %}
+        {% if vm_network["vlan"] is defined %}
+          {% if vm_network["subnet"] is defined %}
+            curl --location --request POST 'https://{{ prop_router }}/configure' \
+              --form 'data=[{"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ vm_network["vlan"] }}", "subnet", "{{ vm_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "description", "{{ prop_description | default("[undefined]") }}"]}, 
+                            {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ vm_network["vlan"] }}", "subnet", "{{ vm_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "ip-address", "{{ vm_network["address"] }}"]}, 
+                            {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ vm_network["vlan"] }}", "subnet", "{{ vm_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "mac", "{{ vm_network["mac"] }}"]}]' \
+              --form key="{{ prop_admin_password }}"
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  args:
+    executable: /bin/bash
+  connection: local
+  become: true
+
+

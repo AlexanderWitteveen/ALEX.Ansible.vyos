@@ -8,9 +8,12 @@
     - /etc/ansible/inventory/vars.yml
 
   tasks:
-    - ansible.builtin.include_role: # import vm
-        name: alex.proxmox.importvm
-    - ansible.builtin.include_role: # start vm
-        name: alex.proxmox.startvm
     - ansible.builtin.include_role: # configure vyos
-        name: alex.vyos.configurevyos
+        name: alex.vyos.rebuildvm
+
+    # - ansible.builtin.include_role: # import vm
+    #     name: alex.proxmox.importvm
+    # - ansible.builtin.include_role: # start vm
+    #     name: alex.proxmox.startvm
+    # - ansible.builtin.include_role: # configure vyos
+    #     name: alex.vyos.configurevyos

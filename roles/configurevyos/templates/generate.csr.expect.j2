@@ -1,0 +1,66 @@
+#!/usr/bin/expect -f
+
+set username {{ prop_admin_username }}
+set password {{ prop_admin_password }}
+
+set timeout 40
+
+spawn qm terminal {{ prop_proxmox_vmid }}
+
+expect "(press Ctrl+O to exit)"
+send -- "\r"
+
+expect "vyos login"
+send -- "$username\r"
+
+expect "Password:"
+send -- "$password\r"
+
+send_user "*\n"
+
+expect "Welcome to VyOS!"
+expect "$username@*"
+send -- "generate pki certificate file host\r"
+
+expect "Enter private key type*"
+send -- "\r"
+
+expect "Enter private key bits*"
+send -- "\r"
+
+expect "Enter country code*"
+send -- "NL\r"
+
+expect "Enter state*"
+send -- "ZH\r"
+
+expect "Enter locality*"
+send -- "Leiden\r"
+
+expect "Enter organization name*"
+send -- "ALEX\r"
+
+expect "Enter common name*"
+send -- "{{ prop_ipaddress }}\r"
+
+expect "Do you want to configure Subject Alternative Names*"
+send -- "y\r"
+
+expect "Enter Subject Alternative Names*"
+send -- "ipv4:10.20.10.1\r"
+
+expect "Do you want to encrypt the private key with a passphrase*"
+send -- "\r"
+
+expect "$username@*"
+send -- "cat /config/auth/host.csr\r"
+
+expect "$username@*"
+send -- "exit\r"
+
+expect "logout"
+send -- "\x0f"
+expect eof
+
+send_user "**** Changed Finished Expect: Network configured\n"
+

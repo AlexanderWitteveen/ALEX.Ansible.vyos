@@ -1,0 +1,181 @@
+---
+
+- name: Ensure CA certificate folder exists
+  file:
+    path: "/{{ prop_basename }}/certificates/"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_ipaddress }}"
+  become: true
+
+- name: Copy CA certificates
+  copy:
+    src: "{{ prop_certificates_sources }}/{{ prop_certificates_ca }}.cer"
+    dest: "/{{ prop_basename }}/certificates/{{ prop_certificates_ca }}.cer"
+    owner: root
+    group: root
+    mode: 0755
+  register: cacertresult1
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_ipaddress }}"
+  become: true
+
+# - name: Extend CA certficiate configuration
+#   shell: |
+#     if [ ! ` cat /etc/ca-certificates.conf | grep "{{ prop_basename }}/{{ prop_certificates_ca }}.cer" ` ]; then 
+#       echo "{{ prop_basename }}/{{ prop_certificates_ca }}.cer" >> /etc/ca-certificates.conf
+#       echo "changedtrue"
+#     else
+#       echo "changedfalse"
+#     fi
+#   args:
+#     executable: /bin/bash
+#   register: cacertresult2
+#   changed_when:
+#   - '"changedtrue" in cacertresult2.stdout'
+#   vars:
+#     ansible_connection: ssh
+#     ansible_host: "{{ prop_ipaddress }}"
+#   become: true
+
+# - name: Add CA Certificate
+#   shell: |
+#     update-ca-certificates
+#   args:
+#     executable: /bin/bash
+#   when: cacertresult1.changed or ("changedtrue" in cacertresult2.stdout)
+#   vars:
+#     ansible_connection: ssh
+#     ansible_host: "{{ prop_ipaddress }}"
+#   become: true
+
+# - name: Ensure certificate folder exists
+#   file:
+#     path: "/{{ prop_basename }}/certificates"
+#     state: directory
+#     owner: root
+#     group: root
+#     mode: 0755
+#   vars:
+#     ansible_connection: ssh
+#     ansible_host: "{{ prop_ipaddress }}"
+#   become: true
+
+- name: Install a list of packages x64
+  apt:
+    deb: "{{ prop_sources_stepcli_x64 }}"
+    state: present
+  when: 'prop_arch == "x64"'
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ prop_ipaddress }}"
+  become: true
+
+# - name: Check if key present
+#   shell: |
+#     ls "/{{ prop_basename }}/certificates/host.crt" 2> /dev/null
+#     if [ $? != "0" ] ; then
+#       echo absent
+#     fi
+#   args:
+#     executable: /bin/bash
+#   register: certresult
+#   changed_when: "false"
+#   vars:
+#     ansible_connection: ssh
+#     ansible_host: "{{ prop_ipaddress }}"
+#   become: true
+
+# - name: Create keys, certificate
+#   when: '"absent" in certresult.stdout'
+#   block:
+#     - name: create key
+#       shell: |
+#         step crypto keypair \
+#           "/{{ prop_basename }}/certificates/host.pub" \
+#           "/{{ prop_basename }}/certificates/host.key" \
+#           --kty=RSA \
+#           --size=2048 \
+#           --force --no-password --insecure
+#       args:
+#         executable: /bin/bash
+#       vars:
+#         ansible_connection: ssh
+#         ansible_host: "{{ prop_ipaddress }}"
+#       become: true
+
+#     - name: create certificate signing request
+#       shell: |
+#         step certificate create \
+#           --csr \
+#           --key "/{{ prop_basename }}/certificates/host.key" \
+#           "{{ prop_description }}" \
+#           "/{{ prop_basename }}/certificates/host.csr" \
+#           --san {{ prop_hostname }} \
+#           --san {{ prop_hostname }}.{{ prop_dns_local }} \
+#           --san localhost \
+#           --san 127.0.0.1 \
+#           --san {{ prop_ipaddress }} \
+#           --force
+#       args:
+#         executable: /bin/bash
+#       vars:
+#         ansible_connection: ssh
+#         ansible_host: "{{ prop_ipaddress }}"
+#       become: true
+
+#     - name: Copy CSR
+#       ansible.builtin.fetch:
+#         src: "/{{ prop_basename }}/certificates/host.csr"
+#         dest: "/tmp/{{ prop_hostname }}.csr"
+#         flat: yes
+#       vars:
+#         ansible_connection: ssh
+#         ansible_host: "{{ prop_ipaddress }}"
+#       become: true
+
+#     - name: Sign certificate
+#       shell: |
+#         step certificate sign \
+#         "/tmp/{{ prop_hostname }}.csr" \
+#         "{{ prop_certificates_sources }}/{{ prop_certificates_ca }}.cer" \
+#         "{{ prop_certificates_sources }}/{{ prop_certificates_ca }}.key" \
+#         --set CommonName={{ prop_hostname }} \
+#         --template "{{ prop_certificates_sources }}/{{ prop_certificates_server_template }}" \
+#         --set-file "{{ prop_certificates_sources }}/{{ prop_certificates_org_settings }}" \
+#         --not-after 8766h \
+#         --bundle > "/tmp/{{ prop_hostname }}.cer"
+#       args:
+#         executable: /bin/bash
+#       connection: local
+#       become: true
+
+#     - name: Copy certificate
+#       copy:
+#         src: "/tmp/{{ prop_hostname }}.cer"
+#         dest: "/{{ prop_basename }}/certificates/host.cer"
+#         owner: root
+#         group: root
+#         mode: 0755
+#       vars:
+#         ansible_connection: ssh
+#         ansible_host: "{{ prop_ipaddress }}"
+#       become: true
+
+# ###### TODO rethink if OK 
+# - name: Copy ssh certificates 2 
+#   copy:
+#     src: "~/.ssh"
+#     dest: "/home/{{ prop_admin_username }}"
+#     owner: "{{ prop_admin_username }}"
+#     group: "{{ prop_admin_groupname }}"
+#     mode: 0700
+#   vars:
+#     ansible_connection: ssh
+#     ansible_host: "{{ prop_ipaddress }}"
+#   become: true

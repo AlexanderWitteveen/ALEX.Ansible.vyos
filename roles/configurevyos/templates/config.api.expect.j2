@@ -1,0 +1,49 @@
+#!/usr/bin/expect -f
+
+set username {{ prop_admin_username }}
+set password {{ prop_admin_password }}
+
+set timeout 40
+
+spawn qm terminal {{ prop_proxmox_vmid }}
+
+expect "(press Ctrl+O to exit)"
+send -- "\r"
+
+expect "vyos login"
+send -- "$username\r"
+
+expect "Password:"
+send -- "$password\r"
+
+expect "Welcome to VyOS!"
+expect "$username@*"
+send -- "config\r"
+
+expect "$username@*"
+send -- "set service https api keys id {{ prop_admin_username }} key {{ prop_admin_password }}\r"
+
+expect "$username@*"
+send -- "set service https api rest\r"
+
+expect "$username@*"
+send -- "set service https certificates certificate host\r"
+
+expect "$username@*"
+send -- "commit\r"
+
+expect "$username@*"
+send -- "save\r"
+
+expect "$username@*"
+send -- "exit\r"
+
+expect "$username@*"
+send -- "exit\r"
+
+expect "logout"
+send -- "\x0f"
+expect eof
+
+send_user "**** Changed Finished Expect: Network configured\n"
+

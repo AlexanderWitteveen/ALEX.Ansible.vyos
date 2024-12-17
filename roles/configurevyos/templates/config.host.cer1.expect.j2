@@ -1,0 +1,22 @@
+#!/usr/bin/expect -f
+
+set username {{ prop_admin_username }}
+set password {{ prop_admin_password }}
+
+set timeout 40
+
+spawn qm terminal {{ prop_proxmox_vmid }}
+
+expect "(press Ctrl+O to exit)"
+send -- "\r"
+
+expect "vyos login"
+send -- "$username\r"
+
+expect "Password:"
+send -- "$password\r"
+
+expect "Welcome to VyOS!"
+expect "$username@*"
+send -- "pwd\r"
+
