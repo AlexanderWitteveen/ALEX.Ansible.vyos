@@ -2,16 +2,29 @@
 
 - name: Register DNS
   shell: |
-    # curl --location --request POST 'https://10.20.10.1/retrieve' --form data='{"op": "showConfig", "path": []}' --form key='{{ prop_admin_password }}'
-    # curl --location --request POST 'https://{{ prop_router }}/retrieve' --form data='{"op": "showConfig", "path": []}' --form key='{{ prop_admin_password }}'
     {% if prop_vm_network is defined %}
-      {% for vm_network in prop_vm_network %}
-        {% if vm_network["dns"] is defined %}
-          {% for dns in vm_network["dns"] %}
-            # path='["service", "dns", "forwarding", "authoritative-domain", "{{ dns["domain"] }}", "records", "{{ dns["type"] | default("a") }}", "{{ dns["name"] | default(prop_hostname) }}", "address", "{{ vm_network["address"] }}"]'
-            curl --location --request POST "https://{{ prop_router }}/configure" \
-              --form 'data={"op": "set", "path": ["service", "dns", "forwarding", "authoritative-domain", "{{ dns["domain"] }}", "records", "{{ dns["type"] | default("a") }}", "{{ dns["name"] | default(prop_hostname) }}", "address", "{{ vm_network["address"] }}"]}' \
-              --form key="{{ prop_admin_password }}"
+      {% for device_network in prop_vm_network %}
+        {% if device_network["dns"] is defined %}
+          {% for dns in device_network["dns"] %}
+            {% for host in hostvars.values() %}
+              {% if host["prop_vyos_interfaces"] is defined %}
+                {% for vyos_interface in host["prop_vyos_interfaces"] %}
+                  {% if vyos_interface["vlans"] is defined %}
+                    {% for vlan in vyos_interface["vlans"] %}
+                      {% if vlan["dns"] is defined %}
+                        {% for vyos_dns in vlan["dns"] %}
+                          {% if vyos_dns["domain"] == dns["domain"] %}
+                            curl --location --request POST "https://{{ host["prop_ipaddress"] }}/configure" \
+                              --form 'data={"op": "set", "path": ["service", "dns", "forwarding", "authoritative-domain", "{{ dns["domain"] }}", "records", "{{ dns["type"] | default("a") }}", "{{ dns["name"] | default(prop_hostname) }}", "address", "{{ device_network["address"] }}"]}' \
+                              --form key="{{ prop_admin_password }}"
+                          {% endif %}
+                        {% endfor %}
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
           {% endfor %}
         {% endif %}
       {% endfor %}
@@ -24,14 +37,28 @@
 - name: Register DHCP
   shell: |
     {% if prop_vm_network is defined %}
-      {% for vm_network in prop_vm_network %}
-        {% if vm_network["vlan"] is defined %}
-          {% if vm_network["subnet"] is defined %}
-            curl --location --request POST 'https://{{ prop_router }}/configure' \
-              --form 'data=[{"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ vm_network["vlan"] }}", "subnet", "{{ vm_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "description", "{{ prop_description | default("[undefined]") }}"]}, 
-                            {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ vm_network["vlan"] }}", "subnet", "{{ vm_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "ip-address", "{{ vm_network["address"] }}"]}, 
-                            {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ vm_network["vlan"] }}", "subnet", "{{ vm_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "mac", "{{ vm_network["mac"] }}"]}]' \
-              --form key="{{ prop_admin_password }}"
+      {% for device_network in prop_vm_network %}
+        {% if device_network["vlan"] is defined %}
+          {% if device_network["subnet"] is defined %}
+            {% for host in hostvars.values() %}
+              {% if host["prop_vyos_interfaces"] is defined %}
+                {% for vyos_interface in host["prop_vyos_interfaces"] %}
+                  {% if vyos_interface["vlans"] is defined %}
+                    {% for vlan in vyos_interface["vlans"] %}
+                      {% if vlan["id"] == device_network["vlan"] %}
+                        # echo {{ host["prop_ipaddress"] }}
+                        # echo {{ device_network["address"] }}
+                        curl --location --request POST 'https://{{ host["prop_ipaddress"] }}/configure' \
+                          --form 'data=[{"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "description", "{{ prop_description | default("[undefined]") }}"]}, 
+                                        {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "ip-address", "{{ device_network["address"] }}"]}, 
+                                        {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "mac", "{{ device_network["mac"] }}"]}]' \
+                          --form key="{{ prop_admin_password }}"
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
           {% endif %}
         {% endif %}
       {% endfor %}

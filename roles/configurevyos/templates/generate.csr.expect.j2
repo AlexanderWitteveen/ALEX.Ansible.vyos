@@ -47,7 +47,7 @@ expect "Do you want to configure Subject Alternative Names*"
 send -- "y\r"
 
 expect "Enter Subject Alternative Names*"
-send -- "ipv4:10.20.10.1\r"
+send -- "ipv4:{{ prop_ipaddress }}\r"
 
 expect "Do you want to encrypt the private key with a passphrase*"
 send -- "\r"
