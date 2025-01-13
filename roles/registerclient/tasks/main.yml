@@ -42,16 +42,19 @@
         {% if device_network["vlan"] is defined %}
           {% if device_network["subnet"] is defined %}
             {% for host in hostvars.values() %}
-              {% if host["prop_vyos_interfaces"] is defined %}
-                {% for vyos_interface in host["prop_vyos_interfaces"] %}
-                  {% if vyos_interface["vlans"] is defined %}
-                    {% for vlan in vyos_interface["vlans"] %}
-                      {% if vlan["ip"] == device_network["subnet"] %}
-                        curl --location --request POST 'https://{{ host["prop_ipaddress"] }}/configure' \
-                          --form 'data=[{"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "description", "{{ prop_description | default("[undefined]") }}"]}, 
-                                        {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "ip-address", "{{ device_network["address"] }}"]}, 
-                                        {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "mac", "{{ device_network["mac"] }}"]}]' \
-                          --form key="{{ prop_admin_password }}"
+              {% if host["prop_vyos_dhcp"] is defined %}
+                {% for vyos_dhcp in host["prop_vyos_dhcp"] %}
+                  {% if vyos_dhcp["subnets"] is defined %}
+                    {% for subnet in vyos_dhcp["subnets"] %}
+                      {% if subnet["ip"] is defined %}
+                        echo "subnet: {{ subnet["ip"] }}"
+                        {% if subnet["ip"] == device_network["subnet"] %}
+                          curl --location --request POST 'https://{{ host["prop_ipaddress"] }}/configure' \
+                            --form 'data=[{"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "description", "{{ prop_description | default("[undefined]") }}"]}, 
+                                          {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "ip-address", "{{ device_network["address"] }}"]}, 
+                                          {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "mac", "{{ device_network["mac"] }}"]}]' \
+                            --form key="{{ prop_admin_password }}"
+                        {% endif %}
                       {% endif %}
                     {% endfor %}
                   {% endif %}
