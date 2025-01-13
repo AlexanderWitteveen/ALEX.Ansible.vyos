@@ -36,6 +36,7 @@
 
 - name: Register DHCP
   shell: |
+    # register DHCP
     {% if prop_vm_network is defined %}
       {% for device_network in prop_vm_network %}
         {% if device_network["vlan"] is defined %}
@@ -45,9 +46,7 @@
                 {% for vyos_interface in host["prop_vyos_interfaces"] %}
                   {% if vyos_interface["vlans"] is defined %}
                     {% for vlan in vyos_interface["vlans"] %}
-                      {% if vlan["id"] == device_network["vlan"] %}
-                        # echo {{ host["prop_ipaddress"] }}
-                        # echo {{ device_network["address"] }}
+                      {% if vlan["ip"] == device_network["subnet"] %}
                         curl --location --request POST 'https://{{ host["prop_ipaddress"] }}/configure' \
                           --form 'data=[{"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "description", "{{ prop_description | default("[undefined]") }}"]}, 
                                         {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "ip-address", "{{ device_network["address"] }}"]}, 
