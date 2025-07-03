@@ -20,6 +20,9 @@ send -- "save\r"
 expect "$username@*"
 send -- "exit\r"
 
+expect "$username@*"
+send -- "exit\r"
+
 expect "logout"
 send -- "\x0f"
 expect eof

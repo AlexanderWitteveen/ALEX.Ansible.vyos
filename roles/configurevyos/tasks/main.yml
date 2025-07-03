@@ -310,8 +310,15 @@
 - name: Execute expect script - register dhcp clients
   shell: |
     expect "~/register.dhcp.clients.{{ prop_proxmox_vmid }}.expect"
-    echo "CHANGED"
+    echo "[$?]"
+    # if [[ "$?" == "0" ]] ; then
+    #   echo "CHANGED"
+    # else
+    #   echo "ERROR"
+    # fi
   register: expectresult
+  # async: 3000
+  # poll: 15
   changed_when: '"Changed" in expectresult.stdout'
   failed_when: '("Error" in expectresult.stdout) or ("Host key verification failed." in expectresult.stdout)'
   vars:
@@ -322,8 +329,10 @@
 - name: Execute expect script - register dns clients
   shell: |
     expect "~/register.dns.clients.{{ prop_proxmox_vmid }}.expect"
-    echo "CHANGED"
+    if [[ "$?" == "0" ]] ; echo "CHANGED" ; else ; echo "ERROR" ; fi
   register: expectresult
+  async: 3000
+  poll: 15
   changed_when: '"Changed" in expectresult.stdout'
   failed_when: '("Error" in expectresult.stdout) or ("Host key verification failed." in expectresult.stdout)'
   vars:
