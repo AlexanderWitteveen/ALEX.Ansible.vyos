@@ -69,4 +69,29 @@
   connection: local
   become: true
 
+- name: Save changes
+  shell: |
+    # Save changes
+    {% if prop_vm_network is defined %}
+      {% for device_network in prop_vm_network %}
+        {% if device_network["vlan"] is defined %}
+          {% if device_network["subnet"] is defined %}
+            {% for host in hostvars.values() %}
+              {% if host["prop_vyos_dhcp"] is defined %}
+                curl --location --request POST "https://{{ host["prop_ipaddress"] }}/config-file" \
+                  --form 'data={"op": "save"}' \
+                  --form key="{{ prop_admin_password }}"
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  args:
+    executable: /bin/bash
+  connection: local
+  become: true
 
+
+# clear dhcp leases
+# show dhcp server leases | grep a1213 | while read line; do ip=$(echo $line | awk '{print $1}'); clear dhcp-server lease $ip ; done
