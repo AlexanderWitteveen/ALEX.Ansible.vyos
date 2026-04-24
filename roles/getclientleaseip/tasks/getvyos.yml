@@ -1,0 +1,16 @@
+---
+
+- name: Get DHCP leases
+  shell: |
+    source /opt/vyatta/etc/functions/script-template
+    run show dhcp server leases | grep {{ device_network["mac"] | lower }} | while read line; do ip=$(echo $line | awk '{print $1}')
+      echo "{{ device_network["address"] }}"
+    done
+  register: dhcpresult
+  args:
+    executable: /bin/vbash
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ hostvars[vyos_router]['prop_ipaddress'] }}"
+    ansible_python_interpreter: "/usr/bin/python3"
+  become: false

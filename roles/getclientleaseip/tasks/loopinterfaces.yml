@@ -1,0 +1,12 @@
+---
+
+- name: Loop interfaces
+  ansible.builtin.include_tasks:
+    file: getvyos.yml
+  loop: "{{ prop_vm_network | default([]) }}"
+  loop_control:
+    loop_var: device_network
+
+- debug:
+    var: dhcpresult.stdout_lines
+  

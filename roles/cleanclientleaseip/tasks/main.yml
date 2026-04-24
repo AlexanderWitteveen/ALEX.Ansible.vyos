@@ -1,0 +1,11 @@
+---
+
+- name: Loop vyos
+  ansible.builtin.include_tasks:
+    file: loopinterfaces.yml
+  loop: "{{ hostvars | list }}"
+  loop_control:
+    loop_var: vyos_router
+  when: >
+    hostvars[vyos_router]["prop_vyos_dhcp"] is defined and
+    hostvars[vyos_router]["prop_ipaddress"] is defined 

@@ -1,0 +1,149 @@
+---
+
+- name: Get DHCP Lease IP
+  shell: |
+    {% if prop_vm_network is defined %}
+      {% for device_network in prop_vm_network %}
+        {% if device_network["subnet"] is defined %}
+          {% for host in hostvars.values() %}
+            {% if host["prop_vyos_dhcp"] is defined %}
+              {% for vyos_dhcp in host["prop_vyos_dhcp"] %}
+                {% if vyos_dhcp["subnets"] is defined %}
+                  {% for subnet in vyos_dhcp["subnets"] %}
+                    {% if subnet["ip"] is defined %}
+                      {% if subnet["ip"] == device_network["subnet"] %}
+                        curl -k --location --request POST 'https://{{ host["prop_ipaddress"] }}/show' \
+                          --form data='{"op": "show", "path": ["dhcp", "server", "leases"]}' \
+                          --form key="{{ prop_admin_password }}" | jq -r '.data' | grep '{{ device_network["mac"] | lower }}' | awk "{print \$1}"
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  args:
+    executable: /bin/bash
+  register: client_lease_ip
+  connection: local
+  become: false
+
+- name: Set fact client lease ip
+  set_fact:
+    result_client_lease_ip: "{{ client_lease_ip.stdout_lines }}"
+  connection: local
+  become: false
+
+# - debug:
+#     var: result_client_lease_ip
+#   connection: local
+#   become: false
+
+# - shell: |
+#     echo "{{ result_client_lease_ip | length }}"
+#   connection: local
+#   become: false
+
+
+# - name: Register DHCP
+#   shell: |
+#     # register DHCP
+#     {% if prop_vm_network is defined %}
+#       {% for device_network in prop_vm_network %}
+#         {% if device_network["vlan"] is defined %}
+#           {% if device_network["subnet"] is defined %}
+#             {% for host in hostvars.values() %}
+#               {% if host["prop_vyos_dhcp"] is defined %}
+#                 {% for vyos_dhcp in host["prop_vyos_dhcp"] %}
+#                   {% if vyos_dhcp["subnets"] is defined %}
+#                     {% for subnet in vyos_dhcp["subnets"] %}
+#                       {% if subnet["ip"] is defined %}
+#                         {% if subnet["ip"] == device_network["subnet"] %}
+#                           curl --location --request POST 'https://{{ host["prop_ipaddress"] }}/configure' \
+#                             --form 'data=[{"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "description", "{{ prop_description | default("[undefined]") }}"]}, 
+#                                           {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "ip-address", "{{ device_network["address"] }}"]}, 
+#                                           {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "mac", "{{ device_network["mac"] }}"]}]' \
+#                             --form key="{{ prop_admin_password }}"
+#                         {% endif %}
+#                       {% endif %}
+#                     {% endfor %}
+#                   {% endif %}
+#                 {% endfor %}
+#               {% endif %}
+#             {% endfor %}
+#           {% endif %}
+#         {% endif %}
+#       {% endfor %}
+#     {% endif %}
+#   args:
+#     executable: /bin/bash
+#   connection: local
+#   become: true
+
+
+# - name: Register DNS
+#   shell: |
+#     {% if prop_vm_network is defined %}
+#       {% for device_network in prop_vm_network %}
+#         {% if device_network["dns"] is defined %}
+#           {% for dns in device_network["dns"] %}
+#             {% for host in hostvars.values() %}
+#               {% if host["prop_vyos_interfaces"] is defined %}
+#                 {% for vyos_interface in host["prop_vyos_interfaces"] %}
+#                   {% if vyos_interface["vlans"] is defined %}
+#                     {% for vlan in vyos_interface["vlans"] %}
+#                       {% if vlan["dns"] is defined %}
+#                         {% for vyos_dns in vlan["dns"] %}
+#                           {% if vyos_dns["domain"] == dns["domain"] %}
+#                             curl --location --request POST "https://{{ host["prop_ipaddress"] }}/configure" \
+#                               --form 'data={"op": "set", "path": ["service", "dns", "forwarding", "authoritative-domain", "{{ dns["domain"] }}", "records", "{{ dns["type"] | default("a") }}", "{{ dns["name"] | default(prop_hostname) }}", "address", "{{ device_network["address"] }}"]}' \
+#                               --form key="{{ prop_admin_password }}"
+#                           {% endif %}
+#                         {% endfor %}
+#                       {% endif %}
+#                     {% endfor %}
+#                   {% endif %}
+#                 {% endfor %}
+#               {% endif %}
+#             {% endfor %}
+#           {% endfor %}
+#         {% endif %}
+#       {% endfor %}
+#     {% endif %}
+#   args:
+#     executable: /bin/bash
+#   connection: local
+#   become: true
+
+
+# - name: Save changes
+#   shell: |
+#     # Save changes
+#     {% if prop_vm_network is defined %}
+#       {% for device_network in prop_vm_network %}
+#         {% if device_network["vlan"] is defined %}
+#           {% if device_network["subnet"] is defined %}
+#             {% for host in hostvars.values() %}
+#               {% if host["prop_vyos_dhcp"] is defined %}
+#                 curl --location --request POST "https://{{ host["prop_ipaddress"] }}/config-file" \
+#                   --form 'data={"op": "save"}' \
+#                   --form key="{{ prop_admin_password }}"
+#               {% endif %}
+#             {% endfor %}
+#           {% endif %}
+#         {% endif %}
+#       {% endfor %}
+#     {% endif %}
+#   args:
+#     executable: /bin/bash
+#   connection: local
+#   become: true
+
+
+# clear dhcp leases
+# show dhcp server leases | grep a1213 | while read line; do ip=$(echo $line | awk '{print $1}'); clear dhcp-server lease $ip ; done
+
+
