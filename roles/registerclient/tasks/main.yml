@@ -2,8 +2,8 @@
 
 - name: Register DNS
   shell: |
-    {% if prop_vm_network is defined %}
-      {% for device_network in prop_vm_network %}
+    {% if prop_networkinterfaces is defined %}
+      {% for device_network in prop_networkinterfaces %}
         {% if device_network["dns"] is defined %}
           {% for dns in device_network["dns"] %}
             {% for host in hostvars.values() %}
@@ -15,7 +15,7 @@
                         {% for vyos_dns in vlan["dns"] %}
                           {% if vyos_dns["domain"] == dns["domain"] %}
                             curl --location --request POST "https://{{ host["prop_ipaddress"] }}/configure" \
-                              --form 'data={"op": "set", "path": ["service", "dns", "forwarding", "authoritative-domain", "{{ dns["domain"] }}", "records", "{{ dns["type"] | default("a") }}", "{{ dns["name"] | default(prop_hostname) }}", "address", "{{ device_network["address"] }}"]}' \
+                              --form 'data={"op": "set", "path": ["service", "dns", "forwarding", "authoritative-domain", "{{ dns["domain"] }}", "records", "{{ dns["type"] | default("a") }}", "{{ dns["name"] | default(prop_host.hostname) }}", "address", "{{ device_network["address"] }}"]}' \
                               --form key="{{ prop_admin_password }}"
                           {% endif %}
                         {% endfor %}
@@ -37,8 +37,8 @@
 - name: Register DHCP
   shell: |
     # register DHCP
-    {% if prop_vm_network is defined %}
-      {% for device_network in prop_vm_network %}
+    {% if prop_networkinterfaces is defined %}
+      {% for device_network in prop_networkinterfaces %}
         {% if device_network["vlan"] is defined %}
           {% if device_network["subnet"] is defined %}
             {% for host in hostvars.values() %}
@@ -49,9 +49,9 @@
                       {% if subnet["ip"] is defined %}
                         {% if subnet["ip"] == device_network["subnet"] %}
                           curl --location --request POST 'https://{{ host["prop_ipaddress"] }}/configure' \
-                            --form 'data=[{"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "description", "{{ prop_description | default("[undefined]") }}"]}, 
-                                          {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "ip-address", "{{ device_network["address"] }}"]}, 
-                                          {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_hostname }}", "mac", "{{ device_network["mac"] }}"]}]' \
+                            --form 'data=[{"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_host.hostname }}", "description", "{{ prop_description | default("[undefined]") }}"]}, 
+                                          {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_host.hostname }}", "ip-address", "{{ device_network["address"] }}"]}, 
+                                          {"op": "set", "path": ["service", "dhcp-server", "shared-network-name", "{{ device_network["vlan"] }}", "subnet", "{{ device_network["subnet"] }}", "static-mapping", "{{ prop_host.hostname }}", "mac", "{{ device_network["mac"] }}"]}]' \
                             --form key="{{ prop_admin_password }}"
                         {% endif %}
                       {% endif %}
@@ -72,8 +72,8 @@
 - name: Save changes
   shell: |
     # Save changes
-    {% if prop_vm_network is defined %}
-      {% for device_network in prop_vm_network %}
+    {% if prop_networkinterfaces is defined %}
+      {% for device_network in prop_networkinterfaces %}
         {% if device_network["vlan"] is defined %}
           {% if device_network["subnet"] is defined %}
             {% for host in hostvars.values() %}
