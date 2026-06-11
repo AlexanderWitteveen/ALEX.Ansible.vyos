@@ -5,7 +5,7 @@ set password {{ prop_admin_password }}
 
 set timeout 40
 
-spawn qm terminal {{ prop_proxmox_vmid }}
+spawn qm terminal {{ prop_proxmox.vmid }}
 
 expect "(press Ctrl+O to exit)"
 send -- "\r"

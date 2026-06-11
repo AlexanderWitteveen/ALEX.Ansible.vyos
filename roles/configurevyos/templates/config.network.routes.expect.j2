@@ -5,7 +5,7 @@ set password {{ prop_admin_password }}
 
 set timeout 40
 
-spawn qm terminal {{ prop_proxmox_vmid }}
+spawn qm terminal {{ prop_proxmox.vmid }}
 
 expect "(press Ctrl+O to exit)"
 send -- "\r"
@@ -20,7 +20,7 @@ expect "Welcome to VyOS!"
 expect "$username@*"
 send -- "config\r"
 
-{% for route in prop_vyos_routes %}
+{% for route in prop_vyos.routes %}
     expect "$username@*"
     send -- "set protocol static route {{ route.route }} next-hop {{ route.hop }}\r"
 {% endfor %}

@@ -7,5 +7,5 @@
   loop_control:
     loop_var: vyos_router
   when: >
-    hostvars[vyos_router]["prop_vyos_dhcp"] is defined and
-    hostvars[vyos_router]["prop_ipaddress"] is defined 
+    hostvars[vyos_router]["prop_vyos"]["dhcp"] is defined and
+    hostvars[vyos_router]["prop_host.ipaddress"] is defined 

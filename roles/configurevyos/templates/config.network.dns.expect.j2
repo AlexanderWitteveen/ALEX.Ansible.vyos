@@ -5,7 +5,7 @@ set password {{ prop_admin_password }}
 
 set timeout 120
 
-spawn qm terminal {{ prop_proxmox_vmid }}
+spawn qm terminal {{ prop_proxmox.vmid }}
 
 expect "(press Ctrl+O to exit)"
 send -- "\r"
@@ -20,32 +20,32 @@ expect "Welcome to VyOS!"
 expect "$username@*"
 send -- "config\r"
 
-{% for interface in prop_vyos_interfaces %}
+{% for interface in prop_vyos.interfaces %}
     {% if interface.vlans is defined %}
         {% for vlan in interface.vlans %}
-            {% for dnszone in prop_vyos_dns.zones %}
+            {% for dnszone in prop_vyos.dns.zones %}
                 expect "$username@*"
                 send -- "set service dns forwarding authoritative-domain {{ dnszone.name }} records ns ns target ns.{{ dnszone.name }}\r"
                 expect "$username@*"
-                send -- "set service dns forwarding authoritative-domain {{ dnszone.name }} records a ns address {{ vlan.address }}\r"
+                send -- "set service dns forwarding authoritative-domain {{ dnszone.name }} records a ns address {{ vlan.ipaddress }}\r"
             {% endfor %}
             expect "$username@*"
-            send -- "set service dns forwarding listen-address {{ vlan.address }}\r"
+            send -- "set service dns forwarding listen-address {{ vlan.ipaddress }}\r"
         {% endfor %}
     {% endif %}
 {% endfor %}
 
-{% for allow in prop_vyos_dns.allows %}
+{% for allow in prop_vyos.dns.allows %}
     expect "$username@*"
     send -- "set service dns forwarding allow-from {{ allow }}\r"
 {% endfor %}
 
-{% for root in prop_vyos_dns.roots %}
+{% for root in prop_vyos.dns.roots %}
     expect "$username@*"
     send -- "set service dns forwarding name-server {{ root }} port 53\r"
 {% endfor %}
 
-{% for forwarder in prop_vyos_dns.forwarders %}
+{% for forwarder in prop_vyos.dns.forwarders %}
     expect "$username@*"
     send -- "set service dns forwarding domain {{ forwarder.domain }} name-server {{ forwarder.address }} \r"
 {% endfor %}

@@ -5,7 +5,7 @@ set password {{ prop_admin_password }}
 
 set timeout 120
 
-spawn qm terminal {{ prop_proxmox_vmid }}
+spawn qm terminal {{ prop_proxmox.vmid }}
 
 expect "(press Ctrl+O to exit)"
 send -- "\r"
@@ -20,12 +20,12 @@ expect "Welcome to VyOS!"
 expect "$username@*"
 send -- "config\r"
 
-{% for dhcp in prop_vyos_dhcp %}
+{% for dhcp in prop_vyos.dhcp %}
     {% if dhcp.subnets is defined %}
         {% for subnet in dhcp.subnets %}
             {% for host in hostvars.values() %}
                 {% if host["prop_vm_network"] is defined %}
-                    {% for vm_network in host["prop_vm_network"] %}
+                    {% for vm_network in host["prop_networkinterfaces"] %}
                         {% if vm_network["vlan"] is defined %}
                             {% if vm_network["vlan"] == subnet.id and vm_network["subnet"] is defined %}
                                 expect "$username@*"

@@ -4,11 +4,11 @@
   shell: |
     source /opt/vyatta/etc/functions/script-template
     run show dhcp server leases | grep {{ device_network["mac"] | lower }} | while read line; do ip=$(echo $line | awk '{print $1}')
-        if [ "$ip" != "{{ device_network["address"] }}" ]; then
-            echo "Clearing lease IP [$ip] for {{ device_network["address"] }} on {{ hostvars[vyos_router]['prop_ipaddress'] }}"
+        if [ "$ip" != "{{ device_network["ipaddress"] }}" ]; then
+            echo "Clearing lease IP [$ip] for {{ device_network["ipaddress"] }} on {{ hostvars[vyos_router]['prop_host']['ipaddress'] }}"
             run clear dhcp-server lease $ip
         else
-            echo "No lease to clear for {{ device_network["address"] }}"
+            echo "No lease to clear for {{ device_network["ipaddress"] }}"
         fi
     done
   register: expectresult
@@ -16,6 +16,6 @@
     executable: /bin/vbash
   vars:
     ansible_connection: ssh
-    ansible_host: "{{ hostvars[vyos_router]['prop_ipaddress'] }}"
+    ansible_host: "{{ hostvars[vyos_router]['prop_host']['ipaddress'] }}"
     ansible_python_interpreter: "/usr/bin/python3"
   become: false

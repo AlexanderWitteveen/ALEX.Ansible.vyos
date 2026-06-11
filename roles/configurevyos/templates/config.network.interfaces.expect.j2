@@ -5,7 +5,7 @@ set password {{ prop_admin_password }}
 
 set timeout 40
 
-spawn qm terminal {{ prop_proxmox_vmid }}
+spawn qm terminal {{ prop_proxmox.vmid }}
 
 expect "(press Ctrl+O to exit)"
 send -- "\r"
@@ -20,22 +20,22 @@ expect "Welcome to VyOS!"
 expect "$username@*"
 send -- "config\r"
 
-{% for interface in prop_vyos_interfaces %}
+{% for interface in prop_vyos.interfaces %}
     expect "$username@*"
     send -- "set interfaces ethernet {{ interface.name }} description \"{{ interface.description }}\"\r"
-    {% if interface.address is defined %}
-        {% if interface.address == "dhcp" %}
+    {% if interface.ipaddress is defined %}
+        {% if interface.ipaddress == "dhcp" %}
             expect "$username@*"
             send -- "set interfaces ethernet {{ interface.name }} address dhcp\r"
         {% else %}
             expect "$username@*"
-            send -- "set interfaces ethernet {{ interface.name }} address {{ interface.address }}/{{ interface.mask }}\r"
+            send -- "set interfaces ethernet {{ interface.name }} address {{ interface.ipaddress }}/{{ interface.mask }}\r"
         {% endif %}
     {% endif %}
     {% if interface.vlans is defined %}
         {% for vlan in interface.vlans %}
             expect "$username@*"
-            send -- "set interfaces ethernet {{ interface.name }} vif {{ vlan.id }} address {{ vlan.address }}/{{ vlan.mask }}\r"
+            send -- "set interfaces ethernet {{ interface.name }} vif {{ vlan.id }} address {{ vlan.ipaddress }}/{{ vlan.mask }}\r"
             expect "$username@*"
             send -- "set interfaces ethernet {{ interface.name }} vif {{ vlan.id }} description \"{{ vlan.description }}\"\r"
         {% endfor %}

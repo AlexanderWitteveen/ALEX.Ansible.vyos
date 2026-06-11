@@ -3,6 +3,6 @@
 - name: Loop interfaces
   ansible.builtin.include_tasks:
     file: configvyos.yml
-  loop: "{{ prop_vm_network | default([]) }}"
+  loop: "{{ prop_networkinterfaces | default([]) }}"
   loop_control:
     loop_var: device_network
